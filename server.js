@@ -178,6 +178,8 @@ const server = http.createServer((req, res) => {
         //This writeFile() is for the new "element".html
         //Notice the newIndexPage() function being used as a callback as one of the arguments in fs.writeFile()
         //This is in the docs for fs.writeFile()
+        //Also notice there is no res.write() or res.end() in the fs.writeFile() but there is a res.write() and res.end() in the callback function. 
+        //This is because if there was a res.write() and res.end() before the second fs.writeFile() is called, there would be an error as fs cannot write another file after an end. So it writes the head 200 after the sucess of writefile then callsback the second write file function newIndexPage() and in there it has a res.write() and res.end().
         fs.writeFile(elementLocation, newElement, newIndexPage(), err => {
           if (err) {
             res.writeHead(500);
