@@ -112,7 +112,7 @@ const server = http.createServer((req, res) => {
           <h1>${parsedBody.elementName}</h1>
           <h2>${parsedBody.elementSymbol}</h2>
           <h3>Atomic number ${parsedBody.elementAtomicNumber}</h3>
-          <p>${parsedBody.elementDescription}</p>
+          <p>${parsedBody.elementName} is a chemical element with chemical symbol ${parsedBody.elementSymbol} and atomic number ${parsedBody.elementAtomicNumber}. ${parsedBody.elementDescription}</p>
           <p><a href="/">back</a></p>
         </body>
         
