@@ -17,6 +17,10 @@ const server = http.createServer((req, res) => {
 
     //This is to check if the url that is being requested through "GET" exist in the array (if you have a .html for it)
     //If it doesnt exist, then it will return a 404.html page
+
+    //urlArr.filter(uri => {
+    //uri === req.url
+    //}) creates an array that is used in the if statement to check for the length. If the length is less than 1 (basically 0), then it means that the url that is used to filter the array doesn't exist in the urlArray.
     if ((urlArr.filter(uri => uri === req.url).length) < 1) {
       fs.readFile("./public/404.html", "utf-8", (err, data) => {
         if (err) throw err;
