@@ -14,8 +14,6 @@ const server = http.createServer((req, res) => {
 
   //Get Method
   if (req.method === "GET") {
-    console.log("req.url", req.url);
-
     //urlArr.filter(uri =>
     //uri === req.url
     //) creates an array that is used in the if statement to check for the length. If the length is less than 1 (basically 0), then it means that the url that is used to filter the array doesn't exist in the urlArray.
@@ -26,10 +24,6 @@ const server = http.createServer((req, res) => {
     //This is to check if the url that is being requested through "GET" exist in the array (if you have a .html for it)
     //If it doesnt exist, then it will return a 404.html page
     if ((filteredUrlArr.length) < 1) {
-      console.log(urlArr, "This better be the right arr");
-      console.log(filteredUrlArr, "wtf did i create?");
-      console.log(filteredUrlArr.length, "Wtf is length on this?");
-      console.log("Did I srsly hit here?");
       fs.readFile("./public/404.html", "utf-8", (err, data) => {
         if (err) throw err;
         res.writeHead(404, {
@@ -52,10 +46,8 @@ const server = http.createServer((req, res) => {
 
       //This else is for the rest of the HTML's since everything else has been checked for
     } else {
-
       //The index.html is hardcoded to check for "/" because if readfile(`./public${req.url}`) is used for the index, the req.url is only / and readfile can't read ./public/, it needs to read ./public/index.html. So this is hardcoded
       if (req.url === "/") {
-        console.log("Tell me I hit here at least");
         fs.readFile(`./public/index.html`, "utf-8", (err, data) => {
           if (err) throw err;
           res.writeHead(200, {
@@ -65,7 +57,7 @@ const server = http.createServer((req, res) => {
           res.end();
         })
 
-        //This is dynamic so that everything that is being requested through "GET" is pulled from ${req.url}. There is no longer a need to hardcode each file path like /public/hydrogen.html or /public/helium.html
+        //This part is dynamic so that everything that is being requested through "GET" is pulled from ${req.url}. There is no longer a need to hardcode each file path like /public/hydrogen.html or /public/helium.html
         //If there are hardcoded file paths, there needs to be a hardcoded if request for every element
         //*****If there are hardcoded if checks, then when there is a post request for a new "element".html to be created, the code can't check for it since there was no hardcoded if check for that newly created element.*****//
       } else {
