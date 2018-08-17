@@ -127,6 +127,8 @@ const server = http.createServer((req, res) => {
 
         //newList function so that a new <li> can be created for every element in the url/element array in the newIndex template literal
         const newList = (arrOne, arrTwo) => {
+
+          //for loop that will start at i = 2 because the arrays are intentionally set up so that it has index.html and styles.css in the first two elements. The links that the function wants to create are only for elements not index.html and styles.css so the loop skips them at starts at i = 2.
           for (var i = 2; i < arrOne.length; i++) {
             //***** THIS IS KEY, += into the string will append the template literal into the current string *****//
             listString += `<li>
