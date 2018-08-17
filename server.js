@@ -14,14 +14,23 @@ const server = http.createServer((req, res) => {
 
   //Get Method
   if (req.method === "GET") {
+    console.log("req.url", req.url);
+
+    //urlArr.filter(uri =>
+    //uri === req.url
+    //) creates an array that is used in the if statement to check for the length. If the length is less than 1 (basically 0), then it means that the url that is used to filter the array doesn't exist in the urlArray.
+
+    let filteredUrlArr = urlArr.filter(uri =>
+      uri === req.url
+    );
 
     //This is to check if the url that is being requested through "GET" exist in the array (if you have a .html for it)
     //If it doesnt exist, then it will return a 404.html page
-
-    //urlArr.filter(uri => {
-    //uri === req.url
-    //}) creates an array that is used in the if statement to check for the length. If the length is less than 1 (basically 0), then it means that the url that is used to filter the array doesn't exist in the urlArray.
-    if ((urlArr.filter(uri => uri === req.url).length) < 1) {
+    if ((filteredUrlArr.length) < 1) {
+      console.log(urlArr, "This better be the right arr");
+      console.log(filteredUrlArr, "wtf did i create?");
+      console.log(filteredUrlArr.length, "Wtf is length on this?");
+      console.log("Did I srsly hit here?");
       fs.readFile("./public/404.html", "utf-8", (err, data) => {
         if (err) throw err;
         res.writeHead(404, {
@@ -47,6 +56,7 @@ const server = http.createServer((req, res) => {
 
       //The index.html is hardcoded to check for "/" because if readfile(`./public${req.url}`) is used for the index, the req.url is only / and readfile can't read ./public/, it needs to read ./public/index.html. So this is hardcoded
       if (req.url === "/") {
+        console.log("Tell me I hit here at least");
         fs.readFile(`./public/index.html`, "utf-8", (err, data) => {
           if (err) throw err;
           res.writeHead(200, {
@@ -131,7 +141,8 @@ const server = http.createServer((req, res) => {
           //for loop that will start at i = 2 because the arrays are intentionally set up so that it has index.html and styles.css in the first two elements. The links that the function wants to create are only for elements not index.html and styles.css so the loop skips them at starts at i = 2.
           for (var i = 2; i < arrOne.length; i++) {
             //***** THIS IS KEY, += into the string will append the template literal into the current string *****//
-            listString += `<li>
+            listString += `
+            <li>
               <a href="${arrOne[i]}">${arrTwo[i]}</a>
             </li>\r\n` //* \r\n is key as well as that will create a new line for every li instead of just one horiztonal list 
           }
