@@ -19,7 +19,6 @@ const server = http.createServer((req, res) => {
     //urlArr.filter(uri =>
     //uri === req.url
     //) creates an array that is used in the if statement to check for the length. If the length is less than 1 (basically 0), then it means that the url that is used to filter the array doesn't exist in the urlArray.
-
     let filteredUrlArr = urlArr.filter(uri =>
       uri === req.url
     );
