@@ -10,6 +10,11 @@ const PORT = process.env.PORT || 8080;
 let urlArr = ["/", "/css/styles.css", "/hydrogen.html", "/helium.html"];
 let elementArr = ["none", "none", "Hydrogen", "Helium"];
 
+//Object that houses username:pw for Authentication exercise
+let secretVault = {
+  wymin: "hihi"
+}
+
 const server = http.createServer((req, res) => {
 
   //Get Method
@@ -75,42 +80,51 @@ const server = http.createServer((req, res) => {
     //Post Method
   } else if (req.method === "POST") {
 
-    // if(req.headers.authorization.split(" ")[1] === "req Og==") {
-    //   res.writeHead(401, {"WWW-Authenticate": "Basic realm='Secure Area'"})
-    //   res.write(`<html><body>Not Authorized</body></html>`);
-    //   res.end
-    // }
+    let encodedAuth = (req.headers.authorization.split(" ")[1]);
+    let decodedAuthStr = Buffer.from(encodedAuth, "base64").toString();
 
-    //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
-    if (req.url === "/elements") {
-      let body = [];
-      req.on("data", chunk => {
-        body.push(chunk);
-      }).on("end", chunk => {
-        body = Buffer.concat(body).toString();
-        let parsedBody = query.parse(body);
+    let decodedArr = decodedAuthStr.split(":");
 
-        //This is a check in the urlArr to see if that current url that is being requested to be made exist
-        //If it does exist, it splices out the current url and pushes the new url
-        //If it doesn't exist, it pushes in the url into the array
-        if ((urlArr.filter(url => url === `/${(parsedBody.elementName).toLowerCase()}.html`)).length < 1) {
-          urlArr.push(`/${(parsedBody.elementName).toLowerCase()}.html`);
-        } else {
-          urlArr.splice(urlArr.indexOf(`/${(parsedBody.elementName).toLowerCase()}.html`), 1, `/${(parsedBody.elementName).toLowerCase()}.html`)
-        }
+    let key = decodedArr[0];
+    let value = decodedArr[1];
 
-        //This is a check in the elementArr to see if that current url that is being requested to be made exist
-        //If it does exist, it splices out the current element and pushes the new element
-        //If it doesn't exist, it pushes in the element into the array
-        if ((elementArr.filter(element => element === parsedBody.elementName)).length < 1) {
-          elementArr.push(parsedBody.elementName);
-        } else {
-          elementArr.splice(elementArr.indexOf(parsedBody.elementName), 1, parsedBody.elementName)
-        }
+    if (req.headers.authorization.split(" ")[1] === "Og==") {
+      res.writeHead(401, {
+        "WWW-Authenticate": 'Basic realm="Secure Area"'
+      })
+      res.write(`<html><body>Not Authorized</body></html>`);
+      res.end();
+    } else if (secretVault[key] === value) {
+      //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
+      if (req.url === "/elements") {
+        let body = [];
+        req.on("data", chunk => {
+          body.push(chunk);
+        }).on("end", chunk => {
+          body = Buffer.concat(body).toString();
+          let parsedBody = query.parse(body);
 
-        //This is the newElement template literal for the new "element".html page
-        //This will be called to create a new html for that corresponding element in the fs.writeFile()
-        let newElement = `<!DOCTYPE html>
+          //This is a check in the urlArr to see if that current url that is being requested to be made exist
+          //If it does exist, it splices out the current url and pushes the new url
+          //If it doesn't exist, it pushes in the url into the array
+          if ((urlArr.filter(url => url === `/${(parsedBody.elementName).toLowerCase()}.html`)).length < 1) {
+            urlArr.push(`/${(parsedBody.elementName).toLowerCase()}.html`);
+          } else {
+            urlArr.splice(urlArr.indexOf(`/${(parsedBody.elementName).toLowerCase()}.html`), 1, `/${(parsedBody.elementName).toLowerCase()}.html`)
+          }
+
+          //This is a check in the elementArr to see if that current url that is being requested to be made exist
+          //If it does exist, it splices out the current element and pushes the new element
+          //If it doesn't exist, it pushes in the element into the array
+          if ((elementArr.filter(element => element === parsedBody.elementName)).length < 1) {
+            elementArr.push(parsedBody.elementName);
+          } else {
+            elementArr.splice(elementArr.indexOf(parsedBody.elementName), 1, parsedBody.elementName)
+          }
+
+          //This is the newElement template literal for the new "element".html page
+          //This will be called to create a new html for that corresponding element in the fs.writeFile()
+          let newElement = `<!DOCTYPE html>
         <html lang="en">
         
         <head>
@@ -129,27 +143,27 @@ const server = http.createServer((req, res) => {
         
         </html>`;
 
-        //This is a string variable that is created so that it can be called in the newList function
-        let listString = "";
+          //This is a string variable that is created so that it can be called in the newList function
+          let listString = "";
 
-        //newList function so that a new <li> can be created for every element in the url/element array in the newIndex template literal
-        const newList = (arrOne, arrTwo) => {
+          //newList function so that a new <li> can be created for every element in the url/element array in the newIndex template literal
+          const newList = (arrOne, arrTwo) => {
 
-          //for loop that will start at i = 2 because the arrays are intentionally set up so that it has index.html and styles.css in the first two elements. The links that the function wants to create are only for elements not index.html and styles.css so the loop skips them at starts at i = 2.
-          for (var i = 2; i < arrOne.length; i++) {
-            //***** THIS IS KEY, += into the string will append the template literal into the current string *****//
-            listString += `
+            //for loop that will start at i = 2 because the arrays are intentionally set up so that it has index.html and styles.css in the first two elements. The links that the function wants to create are only for elements not index.html and styles.css so the loop skips them at starts at i = 2.
+            for (var i = 2; i < arrOne.length; i++) {
+              //***** THIS IS KEY, += into the string will append the template literal into the current string *****//
+              listString += `
             <li>
               <a href="${arrOne[i]}">${arrTwo[i]}</a>
             </li>\r\n` //* \r\n is key as well as that will create a new line for every li instead of just one horiztonal list 
-          }
-          //return is used just to call on the variable so it that there is no error on declaration of variable
-          return listString;
-        };
+            }
+            //return is used just to call on the variable so it that there is no error on declaration of variable
+            return listString;
+          };
 
-        //This is the newIndex template literal for the new index.html page that will be created for every new element that needs to be made so that <h3> can be updated and <ol> can be updated according to every element that has been made
-        //replaces the old index.html to be updated for the elements that are added so a new homepage correctly reflects the new elements
-        let newIndex = `<!DOCTYPE html>
+          //This is the newIndex template literal for the new index.html page that will be created for every new element that needs to be made so that <h3> can be updated and <ol> can be updated according to every element that has been made
+          //replaces the old index.html to be updated for the elements that are added so a new homepage correctly reflects the new elements
+          let newIndex = `<!DOCTYPE html>
         <html lang="en">
         
         <head>
@@ -169,43 +183,46 @@ const server = http.createServer((req, res) => {
         
         </html>`;
 
-        //These are the locations that are used in the two fs.writeFile() below
-        let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
-        let indexLocation = `./public/index.html`
+          //These are the locations that are used in the two fs.writeFile() below
+          let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
+          let indexLocation = `./public/index.html`
 
-        //This is putinside a function so that it can be used as a callback inside the other writeFile()
-        //This is for the new index.html
-        let newIndexPage = () => {
-          fs.writeFile(indexLocation, newIndex, err => {
+          //This is putinside a function so that it can be used as a callback inside the other writeFile()
+          //This is for the new index.html
+          let newIndexPage = () => {
+            fs.writeFile(indexLocation, newIndex, err => {
+              if (err) {
+                res.writeHead(500);
+                res.write('{"success": false }');
+                res.end()
+              } else {
+                res.writeHead(200);
+                res.write('{"success": true }')
+                res.end();
+              }
+            })
+          }
+
+          //This writeFile() is for the new "element".html
+          //Notice the newIndexPage() function being used as a callback as one of the arguments in fs.writeFile()
+          //This is in the docs for fs.writeFile()
+          //Also notice there is no res.write() or res.end() in the fs.writeFile() but there is a res.write() and res.end() in the callback function. 
+          //This is because if there was a res.write() and res.end() before the second fs.writeFile() is called, there would be an error as fs cannot write another file after an end. So it writes the head 200 after the sucess of writefile then callsback the second write file function newIndexPage() and in there it has a res.write() and res.end().
+          fs.writeFile(elementLocation, newElement, newIndexPage(), err => {
             if (err) {
               res.writeHead(500);
               res.write('{"success": false }');
               res.end()
             } else {
               res.writeHead(200);
-              res.write('{"success": true }')
-              res.end();
             }
           })
-        }
 
-        //This writeFile() is for the new "element".html
-        //Notice the newIndexPage() function being used as a callback as one of the arguments in fs.writeFile()
-        //This is in the docs for fs.writeFile()
-        //Also notice there is no res.write() or res.end() in the fs.writeFile() but there is a res.write() and res.end() in the callback function. 
-        //This is because if there was a res.write() and res.end() before the second fs.writeFile() is called, there would be an error as fs cannot write another file after an end. So it writes the head 200 after the sucess of writefile then callsback the second write file function newIndexPage() and in there it has a res.write() and res.end().
-        fs.writeFile(elementLocation, newElement, newIndexPage(), err => {
-          if (err) {
-            res.writeHead(500);
-            res.write('{"success": false }');
-            res.end()
-          } else {
-            res.writeHead(200);
-          }
         })
-
-      })
+      }
     }
+
+
 
     /* Advanced Exercises */
 
@@ -213,16 +230,35 @@ const server = http.createServer((req, res) => {
     //#region This is minimized code for "PUT"
   } else if (req.method === "PUT") {
 
-    //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
-    if (req.url) {
-      let body = [];
-      req.on("data", chunk => {
-        body.push(chunk);
-      }).on("end", chunk => {
-        body = Buffer.concat(body).toString();
-        let parsedBody = query.parse(body);
+    //#region Authentication code same as "POST"
+    let encodedAuth = (req.headers.authorization.split(" ")[1]);
+    let decodedAuthStr = Buffer.from(encodedAuth, "base64").toString();
 
-        let updateElement = `<!DOCTYPE html>
+    let decodedArr = decodedAuthStr.split(":");
+
+    let key = decodedArr[0];
+    let value = decodedArr[1];
+
+    if (req.headers.authorization.split(" ")[1] === "Og==") {
+      res.writeHead(401, {
+        "WWW-Authenticate": 'Basic realm="Secure Area"'
+      })
+      res.write(`<html><body>Not Authorized</body></html>`);
+      res.end();
+
+    } else if (secretVault[key] === value) {
+      //#endregion 
+
+      //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
+      if (req.url) {
+        let body = [];
+        req.on("data", chunk => {
+          body.push(chunk);
+        }).on("end", chunk => {
+          body = Buffer.concat(body).toString();
+          let parsedBody = query.parse(body);
+
+          let updateElement = `<!DOCTYPE html>
           <html lang="en">
 
           <head>
@@ -240,96 +276,117 @@ const server = http.createServer((req, res) => {
           </body>
 
           </html>`;
-        let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
+          let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
 
-        let filteredUrlArr = urlArr.filter(uri =>
-          uri === `/${(parsedBody.elementName).toLowerCase()}.html`
-        );
+          let filteredUrlArr = urlArr.filter(uri =>
+            uri === `/${(parsedBody.elementName).toLowerCase()}.html`
+          );
 
-        if ((filteredUrlArr.length) < 1) {
-          res.writeHead(500);
-          res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
-          res.end();
-        } else if (req.url === "/css/styles.css") {
-          fs.readFile("./public/css/styles.css", "utf-8", (err, data) => {
-            if (err) throw err;
-            res.writeHead(200, {
-              "Content-Type": "text/css"
-            });
-            res.write(data);
+          if ((filteredUrlArr.length) < 1) {
+            res.writeHead(500);
+            res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
             res.end();
-          })
-        } else {
-          if (filteredUrlArr[0] === "/") {
-            fs.readFile(`./public/index.html`, "utf-8", (err, data) => {
+          } else if (req.url === "/css/styles.css") {
+            fs.readFile("./public/css/styles.css", "utf-8", (err, data) => {
               if (err) throw err;
               res.writeHead(200, {
-                "Content-Type": "text/html"
+                "Content-Type": "text/css"
               });
               res.write(data);
               res.end();
             })
-
           } else {
-            fs.writeFile(elementLocation, updateElement, err => {
-              if (err) {
-                res.writeHead(500);
-                res.write('{"success": false }');
-                res.end()
-              } else {
-                res.writeHead(200);
-                res.write('{"success": true }')
+            if (filteredUrlArr[0] === "/") {
+              fs.readFile(`./public/index.html`, "utf-8", (err, data) => {
+                if (err) throw err;
+                res.writeHead(200, {
+                  "Content-Type": "text/html"
+                });
+                res.write(data);
                 res.end();
-              }
-            })
-          }
-        }
+              })
 
-      })
+            } else {
+              fs.writeFile(elementLocation, updateElement, err => {
+                if (err) {
+                  res.writeHead(500);
+                  res.write('{"success": false }');
+                  res.end()
+                } else {
+                  res.writeHead(200);
+                  res.write('{"success": true }')
+                  res.end();
+                }
+              })
+            }
+          }
+
+        })
+      }
     }
     //#endregion 
 
     //Delete Method
     //#region This is minimized code for "DELETE"
   } else if (req.method === "DELETE") {
-    //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
-    if (req.url) {
-      let body = [];
-      req.on("data", chunk => {
-        body.push(chunk);
-      }).on("end", chunk => {
-        body = Buffer.concat(body).toString();
-        let parsedBody = query.parse(body);
 
-        let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`;
-        let indexLocation = `./public/index.html`;
+    //#region Authentication code same as "POST"
+    let encodedAuth = (req.headers.authorization.split(" ")[1]);
+    let decodedAuthStr = Buffer.from(encodedAuth, "base64").toString();
 
-        let filteredUrlArr = urlArr.filter(uri =>
-          uri === `/${(parsedBody.elementName).toLowerCase()}.html`
-        );
+    let decodedArr = decodedAuthStr.split(":");
 
-        if ((filteredUrlArr.length) < 1) {
-          res.writeHead(500);
-          res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
-          res.end();
-        } else {
-          urlArr.splice(urlArr.indexOf(`/${(parsedBody.elementName).toLowerCase()}.html`), 1);
-          elementArr.splice(elementArr.indexOf(parsedBody.elementName), 1);
+    let key = decodedArr[0];
+    let value = decodedArr[1];
 
-          //#region template literal of newIndex and all its related variables/functions
-          let listString = "";
+    if (req.headers.authorization.split(" ")[1] === "Og==") {
+      res.writeHead(401, {
+        "WWW-Authenticate": 'Basic realm="Secure Area"'
+      })
+      res.write(`<html><body>Not Authorized</body></html>`);
+      res.end();
 
-          const newList = (arrOne, arrTwo) => {
-            for (var i = 2; i < arrOne.length; i++) {
-              listString += `
+    } else if (secretVault[key] === value) {
+      //#endregion 
+
+      //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
+      if (req.url) {
+        let body = [];
+        req.on("data", chunk => {
+          body.push(chunk);
+        }).on("end", chunk => {
+          body = Buffer.concat(body).toString();
+          let parsedBody = query.parse(body);
+
+          let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`;
+          let indexLocation = `./public/index.html`;
+
+          let filteredUrlArr = urlArr.filter(uri =>
+            uri === `/${(parsedBody.elementName).toLowerCase()}.html`
+          );
+
+          if ((filteredUrlArr.length) < 1) {
+            res.writeHead(500);
+            res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
+            res.end();
+          } else {
+            urlArr.splice(urlArr.indexOf(`/${(parsedBody.elementName).toLowerCase()}.html`), 1);
+            elementArr.splice(elementArr.indexOf(parsedBody.elementName), 1);
+
+            //#region template literal of newIndex and all its related variables/functions
+            let listString = "";
+
+            const newList = (arrOne, arrTwo) => {
+              for (var i = 2; i < arrOne.length; i++) {
+                listString += `
               <li>
                 <a href="${arrOne[i]}">${arrTwo[i]}</a>
               </li>\r\n`
-            }
-            return listString;
-          };
+              }
+              return listString;
+            };
 
-          let newIndex = `<!DOCTYPE html>
+            let newIndex = `<!DOCTYPE html>
           <html lang="en">
           
           <head>
@@ -348,32 +405,32 @@ const server = http.createServer((req, res) => {
           </body>
           
           </html>`;
-          //#endregion
+            //#endregion
 
-          fs.writeFile(indexLocation, newIndex, err => {
-            if (err) {
-              res.writeHead(500);
-              res.write('{"success": false }');
-              res.end()
-            } else {
+            fs.writeFile(indexLocation, newIndex, err => {
+              if (err) {
+                res.writeHead(500);
+                res.write('{"success": false }');
+                res.end()
+              } else {
+                res.writeHead(200);
+              }
+            })
+            fs.unlink(elementLocation, (err) => {
+              if (err) throw err;
               res.writeHead(200);
-            }
-          })
-          fs.unlink(elementLocation, (err) => {
-            if (err) throw err;
-            res.writeHead(200);
-            res.write('{"success": true }')
-            res.end();
-          });
-        }
-      })
+              res.write('{"success": true }')
+              res.end();
+            });
+          }
+        })
+      }
     }
     //#endregion 
 
-    //Basic Authentication (It is inside each method looking for a authentication header)
+    //Basic Authentication 
+    //(It is inside each req.method (except for GET) looking for an authentication header)
   }
-
-
 
 
 })
