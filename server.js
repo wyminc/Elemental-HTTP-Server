@@ -75,8 +75,14 @@ const server = http.createServer((req, res) => {
     //Post Method
   } else if (req.method === "POST") {
 
+    // if(req.headers.authorization.split(" ")[1] === "req Og==") {
+    //   res.writeHead(401, {"WWW-Authenticate": "Basic realm='Secure Area'"})
+    //   res.write(`<html><body>Not Authorized</body></html>`);
+    //   res.end
+    // }
+
     //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
-    if (req.url) {
+    if (req.url === "/elements") {
       let body = [];
       req.on("data", chunk => {
         body.push(chunk);
@@ -200,7 +206,175 @@ const server = http.createServer((req, res) => {
 
       })
     }
+
+    /* Advanced Exercises */
+
+    //Put Method
+    //#region This is minimized code for "PUT"
+  } else if (req.method === "PUT") {
+
+    //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
+    if (req.url) {
+      let body = [];
+      req.on("data", chunk => {
+        body.push(chunk);
+      }).on("end", chunk => {
+        body = Buffer.concat(body).toString();
+        let parsedBody = query.parse(body);
+
+        let updateElement = `<!DOCTYPE html>
+          <html lang="en">
+
+          <head>
+            <meta charset="UTF-8">
+            <title>The Elements - ${parsedBody.elementName}</title>
+            <link rel="stylesheet" href="/css/styles.css">
+          </head>
+
+          <body>
+            <h1>${parsedBody.elementName}</h1>
+            <h2>${parsedBody.elementSymbol}</h2>
+            <h3>Atomic number ${parsedBody.elementAtomicNumber}</h3>
+            <p>${parsedBody.elementName} is a chemical element with chemical symbol ${parsedBody.elementSymbol} and atomic number ${parsedBody.elementAtomicNumber}. ${parsedBody.elementDescription}</p>
+            <p><a href="/">back</a></p>
+          </body>
+
+          </html>`;
+        let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
+
+        let filteredUrlArr = urlArr.filter(uri =>
+          uri === `/${(parsedBody.elementName).toLowerCase()}.html`
+        );
+
+        if ((filteredUrlArr.length) < 1) {
+          res.writeHead(500);
+          res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
+          res.end();
+        } else if (req.url === "/css/styles.css") {
+          fs.readFile("./public/css/styles.css", "utf-8", (err, data) => {
+            if (err) throw err;
+            res.writeHead(200, {
+              "Content-Type": "text/css"
+            });
+            res.write(data);
+            res.end();
+          })
+        } else {
+          if (filteredUrlArr[0] === "/") {
+            fs.readFile(`./public/index.html`, "utf-8", (err, data) => {
+              if (err) throw err;
+              res.writeHead(200, {
+                "Content-Type": "text/html"
+              });
+              res.write(data);
+              res.end();
+            })
+
+          } else {
+            fs.writeFile(elementLocation, updateElement, err => {
+              if (err) {
+                res.writeHead(500);
+                res.write('{"success": false }');
+                res.end()
+              } else {
+                res.writeHead(200);
+                res.write('{"success": true }')
+                res.end();
+              }
+            })
+          }
+        }
+
+      })
+    }
+    //#endregion 
+
+    //Delete Method
+    //#region This is minimized code for "DELETE"
+  } else if (req.method === "DELETE") {
+    //Code on https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/ to parse out the body
+    if (req.url) {
+      let body = [];
+      req.on("data", chunk => {
+        body.push(chunk);
+      }).on("end", chunk => {
+        body = Buffer.concat(body).toString();
+        let parsedBody = query.parse(body);
+
+        let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`;
+        let indexLocation = `./public/index.html`;
+
+        let filteredUrlArr = urlArr.filter(uri =>
+          uri === `/${(parsedBody.elementName).toLowerCase()}.html`
+        );
+
+        if ((filteredUrlArr.length) < 1) {
+          res.writeHead(500);
+          res.write(`{"error" : "resource ${parsedBody.elementName} does not exist}"`);
+          res.end();
+        } else {
+          urlArr.splice(urlArr.indexOf(`/${(parsedBody.elementName).toLowerCase()}.html`), 1);
+          elementArr.splice(elementArr.indexOf(parsedBody.elementName), 1);
+
+          //#region template literal of newIndex and all its related variables/functions
+          let listString = "";
+
+          const newList = (arrOne, arrTwo) => {
+            for (var i = 2; i < arrOne.length; i++) {
+              listString += `
+              <li>
+                <a href="${arrOne[i]}">${arrTwo[i]}</a>
+              </li>\r\n`
+            }
+            return listString;
+          };
+
+          let newIndex = `<!DOCTYPE html>
+          <html lang="en">
+          
+          <head>
+            <meta charset="UTF-8">
+            <title>The Elements</title>
+            <link rel="stylesheet" href="/css/styles.css">
+          </head>
+          
+          <body>
+            <h1>The Elements</h1>
+            <h2>These are all the known elements.</h2>
+            <h3>These are ${(urlArr.length - 2)}</h3>
+            <ol>
+              ${newList(urlArr, elementArr)}
+            </ol>
+          </body>
+          
+          </html>`;
+          //#endregion
+
+          fs.writeFile(indexLocation, newIndex, err => {
+            if (err) {
+              res.writeHead(500);
+              res.write('{"success": false }');
+              res.end()
+            } else {
+              res.writeHead(200);
+            }
+          })
+          fs.unlink(elementLocation, (err) => {
+            if (err) throw err;
+            res.writeHead(200);
+            res.write('{"success": true }')
+            res.end();
+          });
+        }
+      })
+    }
+    //#endregion 
+
+    //Basic Authentication (It is inside each method looking for a authentication header)
   }
+
+
+
 
 })
 
