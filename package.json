@@ -1,0 +1,20 @@
+{
+  "name": "elemental-http-server",
+  "version": "1.0.0",
+  "description": "### Basic HTTP Server that reads from and writes to fs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wyminc/Elemental-HTTP-Server.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wyminc/Elemental-HTTP-Server/issues"
+  },
+  "homepage": "https://github.com/wyminc/Elemental-HTTP-Server#readme"
+}

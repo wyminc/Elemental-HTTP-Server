@@ -2,7 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const query = require("querystring");
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8000;
 
 //Arrays to house urls and element
 //The first usage of the array is to later call on in the template literals when making a new index.html and a new "element".html
@@ -240,6 +240,7 @@ const server = http.createServer((req, res) => {
           </body>
 
           </html>`;
+
         let elementLocation = `./public/${(parsedBody.elementName).toLowerCase()}.html`
 
         let filteredUrlArr = urlArr.filter(uri =>
@@ -269,7 +270,6 @@ const server = http.createServer((req, res) => {
               res.write(data);
               res.end();
             })
-
           } else {
             fs.writeFile(elementLocation, updateElement, err => {
               if (err) {
